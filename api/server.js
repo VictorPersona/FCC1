@@ -1,30 +1,52 @@
-const express = require('express')
-const path = require('path')
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
 
-const app = express()
+const app = express();
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000;
 
-app.get('/', function (req, res) {
-  console.log('Server is running gracefully')
-  const filePath = path.join('index.html')
-  res.sendFile(filePath)
-})
+app.use(cors());
 
-app.get('/api/:date', function (req, res) {
-  const dateString = req.params.date
-  let requestedDate
-  if (dateString) {
-    requestedDate = new Date(parseInt(dateString))
+app.get("/", function (req, res) {
+  console.log("Server is running gracefully");
+  const filePath = path.join(__dirname, "index.html");
+  res.sendFile(filePath);
+});
+
+app.get("/api", function (req, res) {
+  const requestedDate = new Date();
+  const unixTime = parseInt(requestedDate.getTime());
+  const utcFormatDate = requestedDate.toUTCString();
+  const response = { unix: unixTime, utc: utcFormatDate };
+  console.log(response);
+  res.json({ unix: unixTime, utc: utcFormatDate });
+});
+
+app.get("/api/:date", function (req, res) {
+  const dateString = req.params.date;
+  let requestedDate;
+  let isUnix = /^-?\d+$/.test(dateString);
+
+  if (!dateString) {
+    requestedDate = new Date();
+  } else if (isUnix) {
+    requestedDate = new Date(parseInt(dateString));
   } else {
-    requestedDate = new Date()
+    requestedDate = new Date(dateString);
   }
-  const unixTime = requestedDate.getTime()
-  const utcFormatDate = requestedDate.toUTCString()
-  console.log({ unix: unixTime, utc: utcFormatDate })
-  res.json({ unix: unixTime, utc: utcFormatDate })
-})
+  if (isNaN(requestedDate.getTime())) {
+    res.json({ error: "Invalid Date" });
+    return;
+  }
+
+  const unixTime = parseInt(requestedDate.getTime());
+  const utcFormatDate = requestedDate.toUTCString();
+  const response = { unix: unixTime, utc: utcFormatDate };
+  console.log(response);
+  res.json({ unix: unixTime, utc: utcFormatDate });
+});
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`)
-})
+  console.log(`Server is running on port ${PORT}`);
+});
